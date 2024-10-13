@@ -379,12 +379,27 @@ func parseProfile(user legacyUser) Profile {
 	return profile
 }
 
+func expandURLs(text string, urls []interface{}) string {
+	expandedText := text
+	for _, urlObj := range urls {
+		if urlMap, ok := urlObj.(map[string]interface{}); ok {
+			if shortURL, ok := urlMap["url"].(string); ok {
+				if expandedURL, ok := urlMap["expanded_url"].(string); ok {
+					expandedText = strings.ReplaceAll(expandedText, shortURL, expandedURL)
+				}
+			}
+		}
+	}
+	return expandedText
+}
+
 func parseProfileV2(user userResult) Profile {
 	u := user.Legacy
+	description := expandURLs(u.Description, u.Entities.Description.Urls)
 	profile := Profile{
 		Avatar:         u.ProfileImageURLHTTPS,
 		Banner:         u.ProfileBannerURL,
-		Biography:      u.Description,
+		Biography:      description,
 		FollowersCount: u.FollowersCount,
 		FollowingCount: u.FavouritesCount,
 		FriendsCount:   u.FriendsCount,
